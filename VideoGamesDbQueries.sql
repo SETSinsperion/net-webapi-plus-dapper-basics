@@ -36,12 +36,16 @@ WHERE
     AND pl.[Name] = @Platform
     AND v.[ReleaseDate] = @ReleaseDate
 
+USE VideoGameDbNormalized;
 SELECT * FROM VideoGames;
 SELECT * FROM Platforms;
 SELECT * FROM Developers;
 SELECT * FROM Publishers;
 SELECT * FROM Reviews;
 SELECT * FROM VideoGamesPlatforms;
+SELECT IDENT_CURRENT('VideoGames') AS CurrentIdentity;
+SELECT TOP 1 Id FROM VideoGames ORDER BY Id DESC;
+SELECT CAST(SCOPE_IDENTITY() AS INT)
 
 USE VideoGameDbNormalized
 GO
@@ -71,19 +75,19 @@ BEGIN
                 Id = @Id
         )
         BEGIN
-            Delete relationships Videogame - Platforms
+            -- Delete relationships Videogame - Platforms
             DELETE FROM VideoGamesPlatforms
             WHERE [VideoGameId] = @Id;
 
-            Delete Videogames details.
+            -- Delete Videogames reviews.
             DELETE FROM [dbo].[Reviews]
             WHERE [VideoGameId] = @Id;
 
-            Delete Videogames details.
+            -- Delete Videogames details.
             DELETE FROM [dbo].[GameDetails]
             WHERE [VideoGameId] = @Id;
 
-            Delete Videogame records
+            -- Delete Videogame records
             DELETE FROM VideoGames
             WHERE [Id] = @Id;
 
@@ -95,7 +99,7 @@ BEGIN
     END TRY
     BEGIN CATCH
         ROLLBACK TRANSACTION;
-        Raise the error up to the caller
+        -- Raise the error up to the caller
         THROW;
     END CATCH
 END;

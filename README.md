@@ -222,7 +222,7 @@ namespace DapperBasics.Repositories
 }
 ```
 
-The reason why this interface has that methods is self explanatory; for example, the UPDATE operation in this case will occur when all IDs (Publisher, Developer, etcetera)are in the DB, that's why are methods prefix with _Exists*_.
+The reason why this interface has that methods is self explanatory; for example, the UPDATE operation in this case will occur when all IDs (Publisher, Developer, etcetera) are in the DB, that's why are methods prefix with _Exists*_.
 
 2. Now implement the body of the IVideoGameRepository interface implementing in a class called _VideoGameRepository_:
 
@@ -242,7 +242,6 @@ namespace DapperBasics.Repositories
         {
             _connection = connection;
         }
-
 
         public async Task<List<VideoGame>> GetAllAsync()
         {
@@ -370,12 +369,13 @@ namespace DapperBasics.Repositories
                         ReleaseDate = videoGame.ReleaseDate
                     };
 
-                    var videoGameId = await connection.QuerySingleAsync<int>(insertQuery, parameters, transaction);
-                    if (videoGameId > 0)
+                    videogameId = await connection.QuerySingleAsync<int>(insertQuery, parameters, transaction);
+                    if (videogameId > 0)
                     {
-                        videoGame.Id = videoGameId;
+                        // Reporting the new Id in the parameterized videoGame object.
+                        videoGame.Id = videogameId;
                         var insertPlatformQuery = "INSERT INTO VideoGamesPlatforms (VideoGameId, PlatformId) VALUES (@VideoGameId, @PlatformId)";
-                        await connection.ExecuteAsync(insertPlatformQuery, new { VideoGameId = videoGameId, PlatformId = platformId }, transaction);
+                        await connection.ExecuteAsync(insertPlatformQuery, new { VideoGameId = videogameId, PlatformId = platformId }, transaction);
                     }
                 }
 
@@ -472,7 +472,6 @@ namespace DapperBasics.Repositories
                 throw;
             }
         }
-
 
         public async Task<bool> DeleteAsync(int id)
         {
@@ -661,3 +660,15 @@ a. Click on the _http play_ button: Runs your webapi with the VS2022 debbuger ca
 b. Click on the _play_ button: Runs the webapi w/o debbuging, closing the compilation logs and executing the server in background.
 
 Either one or another option opens an instance of your default browser, opening a tab with the _Swagger API tester application_, or you can use any http client like _Thunder Client (VSCode Extension)_.
+
+> Note: Sometimes the `AddSync()` method surprise you when the new ID jumps from the 10 to 1000 or more, this is because the cache behavior in the Docker enviroment. To reset the ID sequence, use the next T-SQL statement: 
+
+```sql
+DBCC CHECKIDENT ('VideoGames', RESEED, 10);
+```
+
+This tells SQL Server _The last ID used was 10, so the next one should be 11_. Only do this if you're sure there are no higher IDs already in the table. To check the last ID value moreover the SELECT you can query the table metadata:
+
+```sql
+SELECT IDENT_CURRENT('VideoGames') AS CurrentIdentity;
+```
